@@ -1,0 +1,213 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Student {
+    int roll;
+    char name[100];
+    float marks;
+    struct Student* prev;
+    struct Student* next;
+} Student;
+
+Student* head = NULL;
+
+// Create a new student node
+Student* createStudent(int roll, char name[], float marks) {
+    Student* newStudent = (Student*)malloc(sizeof(Student));
+    newStudent->roll = roll;
+    strcpy(newStudent->name, name);
+    newStudent->marks = marks;
+    newStudent->prev = NULL;
+    newStudent->next = NULL;
+    return newStudent;
+}
+
+// Insert student at the end
+void insertStudent(int roll, char name[], float marks) {
+    Student* newStudent = createStudent(roll, name, marks);
+    if (head == NULL) {
+        head = newStudent;
+    } else {
+        Student* temp = head;
+        while (temp->next != NULL)
+            temp = temp->next;
+        temp->next = newStudent;
+        newStudent->prev = temp;
+    }
+    printf("Student inserted successfully!\n");
+}
+
+// Delete student by roll number
+void deleteStudent(int roll) {
+    Student* temp = head;
+    while (temp != NULL && temp->roll != roll)
+        temp = temp->next;
+
+    if (temp == NULL) {
+        printf("Student with Roll No %d not found.\n", roll);
+        return;
+    }
+
+    if (temp->prev)
+        temp->prev->next = temp->next;
+    else
+        head = temp->next;
+
+    if (temp->next)
+        temp->next->prev = temp->prev;
+
+    free(temp);
+    printf("Student deleted successfully!\n");
+}
+
+// Update student details by roll number
+void updateStudent(int roll) {
+    Student* temp = head;
+    while (temp != NULL && temp->roll != roll)
+        temp = temp->next;
+
+    if (temp == NULL) {
+        printf("Student with Roll No %d not found.\n", roll);
+        return;
+    }
+
+    printf("Enter new name: ");
+    getchar();
+    fgets(temp->name, 100, stdin);
+    temp->name[strcspn(temp->name, "\n")] = 0;
+
+    printf("Enter new marks: ");
+    scanf("%f", &temp->marks);
+    printf("Student updated successfully!\n");
+}
+
+// Swap two student nodes (data only)
+void swap(Student* a, Student* b) {
+    int tRoll = a->roll;
+    char tName[100];
+    float tMarks = a->marks;
+    strcpy(tName, a->name);
+
+    a->roll = b->roll;
+    strcpy(a->name, b->name);
+    a->marks = b->marks;
+
+    b->roll = tRoll;
+    strcpy(b->name, tName);
+    b->marks = tMarks;
+}
+
+// Sort students by marks
+void sortByMarks() {
+    if (!head) return;
+    Student* i = head;
+    while (i != NULL) {
+        Student* j = i->next;
+        while (j != NULL) {
+            if (i->marks > j->marks) {
+                swap(i, j);
+            }
+            j = j->next;
+        }
+        i = i->next;
+    }
+    printf("Students sorted by marks.\n");
+}
+
+// Sort students by name
+void sortByName() {
+    if (!head) return;
+    Student* i = head;
+    while (i != NULL) {
+        Student* j = i->next;
+        while (j != NULL) {
+            if (strcmp(i->name, j->name) > 0) {
+                swap(i, j);
+            }
+            j = j->next;
+        }
+        i = i->next;
+    }
+    printf("Students sorted by name.\n");
+}
+
+// Display all students
+void displayStudents() {
+    if (!head) {
+        printf("No student records found.\n");
+        return;
+    }
+    Student* temp = head;
+    printf("\nStudent Records:\n");
+    printf("Roll No\tName\t\tMarks\n");
+    while (temp) {
+        printf("%d\t%-15s%.2f\n", temp->roll, temp->name, temp->marks);
+        temp = temp->next;
+    }
+}
+
+// Menu
+int main() {
+    int choice, roll;
+    char name[100];
+    float marks;
+
+    while (1) {
+        printf("\n--- Student Management System ---\n");
+        printf("1. Insert Student\n");
+        printf("2. Delete Student\n");
+        printf("3. Update Student\n");
+        printf("4. Sort by Marks\n");
+        printf("5. Sort by Name\n");
+        printf("6. Display Students\n");
+        printf("7. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                printf("Enter Roll No: ");
+                scanf("%d", &roll);
+                getchar(); // clear input buffer
+                printf("Enter Name: ");
+                fgets(name, 100, stdin);
+                name[strcspn(name, "\n")] = 0;
+                printf("Enter Marks: ");
+                scanf("%f", &marks);
+                insertStudent(roll, name, marks);
+                break;
+
+            case 2:
+                printf("Enter Roll No to delete: ");
+                scanf("%d", &roll);
+                deleteStudent(roll);
+                break;
+
+            case 3:
+                printf("Enter Roll No to update: ");
+                scanf("%d", &roll);
+                updateStudent(roll);
+                break;
+
+            case 4:
+                sortByMarks();
+                break;
+
+            case 5:
+                sortByName();
+                break;
+
+            case 6:
+                displayStudents();
+                break;
+
+            case 7:
+                printf("Exiting...\n");
+                return 0;
+
+            default:
+                printf("Invalid choice. Try again.\n");
+        }
+    }
+}

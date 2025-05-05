@@ -1,0 +1,142 @@
+ #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Patient {
+    char name[100];
+    int age;
+    char condition[20]; // "Normal" or "Emergency"
+    struct Patient* next;
+} Patient;
+
+Patient* front = NULL;
+Patient* rear = NULL;
+
+// Create a new patient node
+Patient* createPatient(char name[], int age, char condition[]) {
+    Patient* newPatient = (Patient*)malloc(sizeof(Patient));
+    strcpy(newPatient->name, name);
+    newPatient->age = age;
+    strcpy(newPatient->condition, condition);
+    newPatient->next = NULL;
+    return newPatient;
+}
+
+// Add normal patient (end of queue)
+void enqueueNormal(char name[], int age) {
+    Patient* newPatient = createPatient(name, age, "Normal");
+
+    if (front == NULL) {
+        front = rear = newPatient;
+        rear->next = front;
+    } else {
+        rear->next = newPatient;
+        rear = newPatient;
+        rear->next = front;
+    }
+
+    printf("Normal patient '%s' added to the queue.\n", name);
+}
+
+// Add emergency patient (front of queue)
+void enqueueEmergency(char name[], int age) {
+    Patient* newPatient = createPatient(name, age, "Emergency");
+
+    if (front == NULL) {
+        front = rear = newPatient;
+        rear->next = front;
+    } else {
+        newPatient->next = front;
+        rear->next = newPatient;
+        front = newPatient;
+    }
+
+    printf("Emergency patient '%s' added to the front of the queue.\n", name);
+}
+
+// Serve the patient at the front
+void servePatient() {
+    if (front == NULL) {
+        printf("Queue is empty.\n");
+        return;
+    }
+
+    Patient* temp = front;
+
+    if (front == rear) {
+        front = rear = NULL;
+    } else {
+        front = front->next;
+        rear->next = front;
+    }
+
+    printf("Serving patient: %s (%s, Age %d)\n", temp->name, temp->condition, temp->age);
+    free(temp);
+}
+
+// Display current queue
+void displayQueue() {
+    if (front == NULL) {
+        printf("Queue is empty.\n");
+        return;
+    }
+
+    Patient* temp = front;
+    printf("\n--- Patient Queue ---\n");
+    do {
+        printf("%s (Age: %d, %s)\n", temp->name, temp->age, temp->condition);
+        temp = temp->next;
+    } while (temp != front);
+}
+
+int main() {
+    int choice, age;
+    char name[100];
+
+    while (1) {
+        printf("\n--- Hospital Patient Queue ---\n");
+        printf("1. Add Normal Patient\n");
+        printf("2. Add Emergency Patient\n");
+        printf("3. Serve Patient\n");
+        printf("4. Display Queue\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+        getchar(); // clear newline
+
+        switch (choice) {
+            case 1:
+                printf("Enter patient's name: ");
+                fgets(name, 100, stdin);
+                name[strcspn(name, "\n")] = 0;
+                printf("Enter age: ");
+                scanf("%d", &age);
+                enqueueNormal(name, age);
+                break;
+
+            case 2:
+                printf("Enter patient's name: ");
+                fgets(name, 100, stdin);
+                name[strcspn(name, "\n")] = 0;
+                printf("Enter age: ");
+                scanf("%d", &age);
+                enqueueEmergency(name, age);
+                break;
+
+            case 3:
+                servePatient();
+                break;
+
+            case 4:
+                displayQueue();
+                break;
+
+            case 5:
+                printf("Exiting...\n");
+                return 0;
+
+            default:
+                printf("Invalid choice. Try again.\n");
+        }
+    }
+}

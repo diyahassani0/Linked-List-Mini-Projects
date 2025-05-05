@@ -1,0 +1,171 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_SEATS 3
+
+typedef struct Passenger {
+    char name[100];
+    int age;
+    int seatNo; // Only for confirmed
+    struct Passenger* next;
+} Passenger;
+
+Passenger* confirmedList = NULL;
+Passenger* waitingList = NULL;
+int confirmedCount = 0;
+int nextSeatNo = 1;
+
+Passenger* createPassenger(char name[], int age, int seatNo) {
+    Passenger* newP = (Passenger*)malloc(sizeof(Passenger));
+    strcpy(newP->name, name);
+    newP->age = age;
+    newP->seatNo = seatNo;
+    newP->next = NULL;
+    return newP;
+}
+
+void bookTicket(char name[], int age) {
+    if (confirmedCount < MAX_SEATS) {
+        Passenger* p = createPassenger(name, age, nextSeatNo++);
+        if (!confirmedList) {
+            confirmedList = p;
+        } else {
+            Passenger* temp = confirmedList;
+            while (temp->next) temp = temp->next;
+            temp->next = p;
+        }
+        confirmedCount++;
+        printf("Ticket confirmed. Seat No: %d\n", p->seatNo);
+    } else {
+        Passenger* p = createPassenger(name, age, -1); // No seat yet
+        if (!waitingList) {
+            waitingList = p;
+        } else {
+            Passenger* temp = waitingList;
+            while (temp->next) temp = temp->next;
+            temp->next = p;
+        }
+        printf("All seats booked. Added to waiting list.\n");
+    }
+}
+
+void cancelTicket(int seatNo) {
+    Passenger *temp = confirmedList, *prev = NULL;
+    while (temp && temp->seatNo != seatNo) {
+        prev = temp;
+        temp = temp->next;
+    }
+
+    if (!temp) {
+        printf("No confirmed ticket with Seat No %d found.\n", seatNo);
+        return;
+    }
+
+    // Remove from confirmed list
+    if (prev)
+        prev->next = temp->next;
+    else
+        confirmedList = temp->next;
+
+    free(temp);
+    confirmedCount--;
+    printf("Ticket with Seat No %d cancelled.\n", seatNo);
+
+    // Promote from waiting list
+    if (waitingList) {
+        Passenger* promoted = waitingList;
+        waitingList = waitingList->next;
+        promoted->seatNo = nextSeatNo++;
+        promoted->next = NULL;
+
+        // Add to confirmed list
+        if (!confirmedList) {
+            confirmedList = promoted;
+        } else {
+            Passenger* temp2 = confirmedList;
+            while (temp2->next) temp2 = temp2->next;
+            temp2->next = promoted;
+        }
+        confirmedCount++;
+        printf("Passenger '%s' promoted from waiting list. Seat No: %d\n", promoted->name, promoted->seatNo);
+    }
+}
+
+void showConfirmed() {
+    if (!confirmedList) {
+        printf("No confirmed bookings.\n");
+        return;
+    }
+    Passenger* temp = confirmedList;
+    printf("\n--- Confirmed Tickets ---\n");
+    printf("Seat No\tName\t\tAge\n");
+    while (temp) {
+        printf("%d\t%-15s%d\n", temp->seatNo, temp->name, temp->age);
+        temp = temp->next;
+    }
+}
+
+void showWaiting() {
+    if (!waitingList) {
+        printf("Waiting list is empty.\n");
+        return;
+    }
+    Passenger* temp = waitingList;
+    int pos = 1;
+    printf("\n--- Waiting List ---\n");
+    printf("Position\tName\t\tAge\n");
+    while (temp) {
+        printf("%d\t\t%-15s%d\n", pos++, temp->name, temp->age);
+        temp = temp->next;
+    }
+}
+
+int main() {
+    int choice, age, seatNo;
+    char name[100];
+
+    while (1) {
+        printf("\n--- Train Reservation System ---\n");
+        printf("1. Book Ticket\n");
+        printf("2. Cancel Ticket\n");
+        printf("3. Show Confirmed Tickets\n");
+        printf("4. Show Waiting List\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+        getchar(); // flush newline
+
+        switch (choice) {
+            case 1:
+                printf("Enter Name: ");
+                fgets(name, 100, stdin);
+                name[strcspn(name, "\n")] = 0;
+                printf("Enter Age: ");
+                scanf("%d", &age);
+                bookTicket(name, age);
+                break;
+
+            case 2:
+                printf("Enter Seat No to cancel: ");
+                scanf("%d", &seatNo);
+                cancelTicket(seatNo);
+                break;
+
+            case 3:
+                showConfirmed();
+                break;
+
+            case 4:
+                showWaiting();
+                break;
+
+            case 5:
+                printf("Exiting...\n");
+                return 0;
+
+            default:
+                printf("Invalid choice.\n");
+        }
+    }
+}

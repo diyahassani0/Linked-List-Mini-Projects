@@ -1,0 +1,116 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Action {
+    char state[100];
+    struct Action* prev;
+    struct Action* next;
+} Action;
+
+Action* head = NULL;
+Action* current = NULL;
+
+// Create a new action node
+Action* createAction(char* state) {
+    Action* newAction = (Action*)malloc(sizeof(Action));
+    strcpy(newAction->state, state);
+    newAction->prev = newAction->next = NULL;
+    return newAction;
+}
+
+// Make a new edit
+void makeEdit(char* newState) {
+    Action* newAction = createAction(newState);
+
+    if (current == NULL) {
+        head = current = newAction;
+    } else {
+        // If redo history exists, delete it
+        Action* temp = current->next;
+        while (temp) {
+            Action* toDelete = temp;
+            temp = temp->next;
+            free(toDelete);
+        }
+        current->next = newAction;
+        newAction->prev = current;
+        current = newAction;
+    }
+
+    printf("Edit made: %s\n", newState);
+}
+
+// Undo operation
+void undo() {
+    if (current == NULL || current->prev == NULL) {
+        printf("Nothing to undo.\n");
+        return;
+    }
+    current = current->prev;
+    printf("Undo: Current state is \"%s\"\n", current->state);
+}
+
+// Redo operation
+void redo() {
+    if (current == NULL || current->next == NULL) {
+        printf("Nothing to redo.\n");
+        return;
+    }
+    current = current->next;
+    printf("Redo: Current state is \"%s\"\n", current->state);
+}
+
+// Show current state
+void showCurrent() {
+    if (current == NULL) {
+        printf("No actions performed yet.\n");
+    } else {
+        printf("Current state: \"%s\"\n", current->state);
+    }
+}
+
+int main() {
+    int choice;
+    char input[100];
+
+    while (1) {
+        printf("\n--- Undo-Redo System ---\n");
+        printf("1. Make Edit\n");
+        printf("2. Undo\n");
+        printf("3. Redo\n");
+        printf("4. Show Current State\n");
+        printf("5. Exit\n");
+        printf("Choose an option: ");
+        scanf("%d", &choice);
+        getchar(); // clear input buffer
+
+        switch (choice) {
+            case 1:
+                printf("Enter new edit: ");
+                fgets(input, 100, stdin);
+                input[strcspn(input, "\n")] = 0;
+                makeEdit(input);
+                break;
+
+            case 2:
+                undo();
+                break;
+
+            case 3:
+                redo();
+                break;
+
+            case 4:
+                showCurrent();
+                break;
+
+            case 5:
+                printf("Exiting...\n");
+                return 0;
+
+            default:
+                printf("Invalid option.\n");
+        }
+    }
+}
